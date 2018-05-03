@@ -133,21 +133,170 @@ SELECT title
 Where title LIKE 'K%' or title LIKE 'Q%' ;
 
 # 7b. Use subqueries to display all actors who appear in the film `Alone Trip`.
-   
-* 7c. You want to run an email marketing campaign in Canada, for which you will need the names and email addresses of all Canadian customers. Use joins to retrieve this information.
+Select f.title, fa.actor_id
+	from film f
+	Inner Join film_actor fa
+		On fa.film_id = f.film_id
+where f.title = 'Alone Trip'; 
 
-* 7d. Sales have been lagging among young families, and you wish to target all family movies for a promotion. Identify all movies categorized as famiy films.
+# 7c. You want to run an email marketing campaign in Canada, for which you will need the names and email addresses of all Canadian customers. Use joins to retrieve this information.
+SELECT * FROM customer; # email
+SELECT * FROM address; # city id
+SELECT * FROM city; #country id
+SELECT * FROM country; # country
 
-* 7e. Display the most frequently rented movies in descending order.
-  	
-* 7f. Write a query to display how much business, in dollars, each store brought in.
+Create view email_list as 
+Select c.email, co.country
+From customer c
+Join address ad
+On (c.address_id = ad.address_id)
+join city ci
+on (ad.city_id = ci.city_id)
+join country co
+on (ci.country_id = co.country_id)
+where co.country = 'Canada';
 
-* 7g. Write a query to display for each store its store ID, city, and country.
-  	
-* 7h. List the top five genres in gross revenue in descending order. (**Hint**: you may need to use the following tables: category, film_category, inventory, payment, and rental.)
-  	
-* 8a. In your new role as an executive, you would like to have an easy way of viewing the Top five genres by gross revenue. Use the solution from the problem above to create a view. If you haven't solved 7h, you can substitute another query to create a view.
-  	
-* 8b. How would you display the view that you created in 8a?
+SELECT * FROM email_list;
 
-* 8c. You find that you no longer need the view `top_five_genres`. Write a query to delete it.
+# 7d. Sales have been lagging among young families, and you wish to target all family movies for a promotion. Identify all movies categorized as famiy films.
+SELECT * FROM film_category; 
+
+Create view family_list as 
+Select f.title
+From category ca
+Join film_category fca
+On (ca.category_id = fca.category_id)
+Join film f
+On (fca.film_id = f.film_id)
+where ca.name = 'Family';
+
+SELECT * FROM family_list; # country
+
+# 7e. Display the most frequently rented movies in descending order.
+SELECT * FROM rental; #inventory_id
+SELECT * FROM inventory; #film_id
+
+Select count(r.inventory_id) as rental_count, f.title
+	From rental r
+	Join inventory i
+	On (r.inventory_id = i.inventory_id)
+	Join film f
+	On (i.film_id = f.film_id)
+    group by f.title;
+;
+
+# 7f. Write a query to display how much business, in dollars, each store brought in.
+SELECT * FROM store; # manager_staff_id is the same as staff_id in payment Table ?
+SELECT * FROM payment; # staff_id, amount, payment_id
+
+SELECT p.staff_id, sum(p.amount) as total_revenue # Staff ID corresponds to the Store ID
+FROM payment p
+group by p.staff_id;
+
+# 7g. Write a query to display for each store its store ID, city, and country.
+SELECT * FROM store; # store_id, address_id
+SELECT * FROM address; # address, city_id
+SELECT * FROM city; # city
+SELECT * FROM country; # rental_id, customer_id
+
+SELECT s.store_id, c.city, a.address, co.country
+	FROM store s
+    Join address a
+    On (s.address_id = a.address_id)
+    Join city c
+    On (a.city_id = c.city_id)
+    Join country co
+    On (c.country_id = co.country_id)
+	group by s.store_id;
+
+# 7h. List the top five genres in gross revenue in descending order. (**Hint**: you may need to use the following tables: category, film_category, inventory, payment, and rental.)
+SELECT * FROM category; # category_id, name
+SELECT * FROM film_category; # film_id, category_id
+SELECT * FROM inventory; # film_id, store_id, inventory_id
+SELECT * FROM payment; # payment_id, rental_id, amount
+SELECT * FROM rental; # inventory_id, rental_id,
+
+SELECT c.name, sum(p.amount) as revenue
+	FROM category c
+    Join film_category fc
+    On (c.category_id = fc.category_id)
+    Join inventory i
+    On (fc.film_id = i.film_id)
+    Join rental r
+    On (i.inventory_id = r.inventory_id)
+    Join payment p
+    On (r.rental_id = p.rental_id)
+	group by c.name
+ORDER BY revenue DESC;
+
+# 8a. In your new role as an executive, you would like to have an easy way of viewing the Top five genres by gross revenue. Use the solution from the problem above to create a view. If you have not solved 7h, you can substitute another query to create a view.
+SELECT c.name, sum(p.amount) as revenue
+	FROM category c
+    Join film_category fc
+    On (c.category_id = fc.category_id)
+    Join inventory i
+    On (fc.film_id = i.film_id)
+    Join rental r
+    On (i.inventory_id = r.inventory_id)
+    Join payment p
+    On (r.rental_id = p.rental_id)
+	group by c.name
+ORDER BY revenue DESC
+limit 5;
+
+# 8b. How would you display the view that you created in 8a?
+Create view top_sellers as 
+SELECT c.name, sum(p.amount) as revenue
+	FROM category c
+    Join film_category fc
+    On (c.category_id = fc.category_id)
+    Join inventory i
+    On (fc.film_id = i.film_id)
+    Join rental r
+    On (i.inventory_id = r.inventory_id)
+    Join payment p
+    On (r.rental_id = p.rental_id)
+	group by c.name
+ORDER BY revenue DESC
+limit 5;
+SELECT * FROM top_sellers;
+
+# 8c. You find that you no longer need the view `top_five_genres`. Write a query to delete it.
+	# Attempt 1:
+Delete from top_sellers
+limit 5; # Not updatable...
+	# Attempt 2:
+Update top_sellers
+Set top_sellers = 
+(
+SELECT c.name, sum(p.amount) as revenue
+	FROM category c
+    Join film_category fc
+    On (c.category_id = fc.category_id)
+    Join inventory i
+    On (fc.film_id = i.film_id)
+    Join rental r
+    On (i.inventory_id = r.inventory_id)
+    Join payment p
+    On (r.rental_id = p.rental_id)
+	group by c.name
+ORDER BY revenue DESC
+); # Didn't work either... :(
+	# Reference: https://stackoverflow.com/questions/9080403/update-with-order-by-and-limit-not-working-in-mysql
+
+	# OK, I'll do it the stupid way....:
+Drop View top_sellers;
+Create view top_sellers as 
+SELECT c.name, sum(p.amount) as revenue
+	FROM category c
+    Join film_category fc
+    On (c.category_id = fc.category_id)
+    Join inventory i
+    On (fc.film_id = i.film_id)
+    Join rental r
+    On (i.inventory_id = r.inventory_id)
+    Join payment p
+    On (r.rental_id = p.rental_id)
+	group by c.name
+ORDER BY revenue DESC;
+SELECT * FROM top_sellers;
