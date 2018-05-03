@@ -6,15 +6,14 @@ Overall I've got a pretty good grasp writting in SQL. Next step is to learn the 
 
 # INSTRUCTIONS
 
-# MySQL_W10
 Querying the Sakila DB in MySQL
 
 Instructions: 
 For this homework, you’ll need to load data from a sample database provided by MySQL named [Sakila](https://dev.mysql.com/doc/sakila/en/sakila-installation.html).
 
-The Ask:
 
-## Homework Assignment
+
+## The Ask:
 
 * 1a. Display the first and last names of all actors from the table `actor`. 
 
